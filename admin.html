@@ -88,14 +88,10 @@
 
 <script>
     (function() {
-        // ========== CONFIGURATION ==========
         const SUPABASE_URL = 'https://cgtfqgjlarzzcxrtgzsf.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNndGZxZ2psYXJ6emN4cnRnenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTIyMTgsImV4cCI6MjA5MTM4ODIxOH0.D7rz1DWhPCAv1mhXsniebPgtqFzIl5vOXFgR4axNYAc';
         
-        // Initialize Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // ========== GLOBAL STATE ==========
         let currentUser = null;
 
         // DOM Elements
@@ -118,44 +114,27 @@
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
         const productTableBody = document.getElementById('productTableBody');
 
-        // ========== AUTH STATE LISTENER ==========
+        // Auth state
         supabase.auth.getSession().then(({ data: { session } }) => {
             currentUser = session?.user ?? null;
-            if (currentUser) {
-                showAdminPanel(currentUser.email);
-                loadProducts();
-            }
+            if (currentUser) { showAdminPanel(currentUser.email); loadProducts(); }
         });
-
         supabase.auth.onAuthStateChange((event, session) => {
             currentUser = session?.user ?? null;
-            if (currentUser) {
-                showAdminPanel(currentUser.email);
-                loadProducts();
-            } else {
-                loginScreen.style.display = 'block';
-                adminPanel.style.display = 'none';
-            }
+            if (currentUser) { showAdminPanel(currentUser.email); loadProducts(); }
+            else { loginScreen.style.display = 'block'; adminPanel.style.display = 'none'; }
         });
 
-        // ========== LOGIN ==========
         async function handleLogin() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) {
-                loginError.innerText = error.message;
-            } else {
-                loginError.innerText = '';
-            }
+            if (error) loginError.innerText = error.message;
+            else loginError.innerText = '';
         }
         loginBtn.addEventListener('click', handleLogin);
 
-        // ========== LOGOUT ==========
-        async function handleLogout() {
-            await supabase.auth.signOut();
-        }
+        async function handleLogout() { await supabase.auth.signOut(); }
         logoutBtn.addEventListener('click', handleLogout);
 
         function showAdminPanel(email) {
@@ -164,13 +143,9 @@
             userEmailSpan.innerText = email;
         }
 
-        // ========== LOAD PRODUCTS ==========
         async function loadProducts() {
             const { data, error } = await supabase.from('products').select('*').order('name');
-            if (error) {
-                console.error('Error loading products:', error);
-                return;
-            }
+            if (error) { console.error('Error loading products:', error); return; }
             
             productTableBody.innerHTML = data.map(product => `
                 <tr>
@@ -186,7 +161,6 @@
                 </tr>
             `).join('');
             
-            // Attach event listeners
             document.querySelectorAll('.stock-input').forEach(input => {
                 input.addEventListener('change', async (e) => {
                     const id = e.target.dataset.id;
@@ -195,11 +169,9 @@
                     loadProducts();
                 });
             });
-            
             document.querySelectorAll('.action-btn.edit').forEach(btn => {
                 btn.addEventListener('click', () => editProduct(btn.dataset.id));
             });
-            
             document.querySelectorAll('.action-btn.delete').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     if (confirm('Delete this product?')) {
@@ -210,11 +182,9 @@
             });
         }
 
-        // ========== EDIT PRODUCT ==========
         async function editProduct(id) {
             const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
             if (error) return alert('Error loading product');
-            
             productIdInput.value = data.id;
             productNameInput.value = data.name;
             productSkuInput.value = data.sku;
@@ -222,11 +192,9 @@
             productStockInput.value = data.stock;
             productCategorySelect.value = data.category || 'faucets';
             formTitle.innerText = 'Edit Product';
-            
             imagePreviewContainer.innerHTML = data.image_url ? `<img src="${data.image_url}" style="max-width:100px; max-height:100px;">` : '';
         }
 
-        // ========== RESET FORM ==========
         function resetForm() {
             productForm.reset();
             productIdInput.value = '';
@@ -235,10 +203,8 @@
         }
         cancelFormBtn.addEventListener('click', resetForm);
 
-        // ========== SAVE PRODUCT ==========
         productForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const id = productIdInput.value;
             const name = productNameInput.value;
             const sku = productSkuInput.value;
@@ -248,9 +214,13 @@
             const imageFile = productImageInput.files[0];
             
             let image_url = null;
-            
             if (imageFile) {
-                const fileName = `${Date.now()}_${imageFile.name}`;
+                // Sanitize filename
+                let safeName = imageFile.name
+                    .replace(/\s+/g, '-')
+                    .replace(/[^\w.-]/g, '')
+                    .replace(/°/, 'deg');
+                const fileName = `${Date.now()}_${safeName}`;
                 const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, imageFile);
                 if (uploadError) {
                     alert('Image upload failed: ' + uploadError.message);
@@ -264,19 +234,11 @@
             if (image_url) productData.image_url = image_url;
             
             let error;
-            if (id) {
-                ({ error } = await supabase.from('products').update(productData).eq('id', id));
-            } else {
-                ({ error } = await supabase.from('products').insert([productData]));
-            }
+            if (id) ({ error } = await supabase.from('products').update(productData).eq('id', id));
+            else ({ error } = await supabase.from('products').insert([productData]));
             
-            if (error) {
-                alert('Error saving product: ' + error.message);
-            } else {
-                alert('Product saved!');
-                resetForm();
-                loadProducts();
-            }
+            if (error) alert('Error saving product: ' + error.message);
+            else { alert('Product saved!'); resetForm(); loadProducts(); }
         });
     })();
 </script>
