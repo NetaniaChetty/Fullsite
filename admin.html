@@ -6,7 +6,6 @@
     <title>Admin | Shrine Plumbing</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <!-- Load Supabase FIRST -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .admin-container { max-width: 1200px; margin: 0 auto; }
@@ -88,188 +87,198 @@
 </div>
 
 <script>
-    // ========== CONFIGURATION ==========
-    const SUPABASE_URL = 'https://cgtfqgjlarzzcxrtgzsf.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNndGZxZ2psYXJ6emN4cnRnenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTIyMTgsImV4cCI6MjA5MTM4ODIxOH0.D7rz1DWhPCAv1mhXsniebPgtqFzIl5vOXFgR4axNYAc';
-    
-    // Wait for Supabase to be available
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let currentUser = null;
-
-    // ========== DOM ELEMENTS ==========
-    const loginScreen = document.getElementById('loginScreen');
-    const adminPanel = document.getElementById('adminPanel');
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const loginError = document.getElementById('loginError');
-    const userEmailSpan = document.getElementById('userEmail');
-    const productForm = document.getElementById('productForm');
-    const cancelBtn = document.getElementById('cancelFormBtn');
-
-    // ========== AUTH STATE ==========
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        currentUser = session?.user ?? null;
-        if (currentUser) {
-            showAdminPanel(currentUser.email);
-            loadProducts();
-        }
-    });
-
-    supabase.auth.onAuthStateChange((event, session) => {
-        currentUser = session?.user ?? null;
-        if (currentUser) {
-            showAdminPanel(currentUser.email);
-            loadProducts();
-        } else {
-            loginScreen.style.display = 'block';
-            adminPanel.style.display = 'none';
-        }
-    });
-
-    // ========== LOGIN ==========
-    async function handleLogin() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+    (function() {
+        // ========== CONFIGURATION ==========
+        const SUPABASE_URL = 'https://cgtfqgjlarzzcxrtgzsf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNndGZxZ2psYXJ6emN4cnRnenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTIyMTgsImV4cCI6MjA5MTM4ODIxOH0.D7rz1DWhPCAv1mhXsniebPgtqFzIl5vOXFgR4axNYAc';
         
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-            loginError.innerText = error.message;
-        } else {
-            loginError.innerText = '';
-        }
-    }
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    loginBtn.addEventListener('click', handleLogin);
+        // ========== GLOBAL STATE ==========
+        let currentUser = null;
 
-    // ========== LOGOUT ==========
-    async function handleLogout() {
-        await supabase.auth.signOut();
-    }
-    logoutBtn.addEventListener('click', handleLogout);
+        // DOM Elements
+        const loginScreen = document.getElementById('loginScreen');
+        const adminPanel = document.getElementById('adminPanel');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const loginError = document.getElementById('loginError');
+        const userEmailSpan = document.getElementById('userEmail');
+        const productForm = document.getElementById('productForm');
+        const cancelFormBtn = document.getElementById('cancelFormBtn');
+        const formTitle = document.getElementById('formTitle');
+        const productIdInput = document.getElementById('productId');
+        const productNameInput = document.getElementById('productName');
+        const productSkuInput = document.getElementById('productSku');
+        const productPriceInput = document.getElementById('productPrice');
+        const productStockInput = document.getElementById('productStock');
+        const productCategorySelect = document.getElementById('productCategory');
+        const productImageInput = document.getElementById('productImage');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const productTableBody = document.getElementById('productTableBody');
 
-    function showAdminPanel(email) {
-        loginScreen.style.display = 'none';
-        adminPanel.style.display = 'block';
-        userEmailSpan.innerText = email;
-    }
-
-    // ========== LOAD PRODUCTS ==========
-    async function loadProducts() {
-        const { data, error } = await supabase.from('products').select('*').order('name');
-        if (error) {
-            console.error('Error loading products:', error);
-            return;
-        }
-        
-        const tbody = document.getElementById('productTableBody');
-        tbody.innerHTML = data.map(product => `
-            <tr>
-                <td><img src="${product.image_url || 'https://placehold.co/50x50'}" class="image-preview" onerror="this.src='https://placehold.co/50x50'"></td>
-                <td>${product.name}</td>
-                <td>${product.sku}</td>
-                <td>R${parseFloat(product.price).toFixed(2)}</td>
-                <td><input type="number" class="stock-input" value="${product.stock}" data-id="${product.id}" min="0"></td>
-                <td>
-                    <button class="action-btn edit" data-id="${product.id}"><i class="fas fa-edit"></i></button>
-                    <button class="action-btn delete" data-id="${product.id}"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `).join('');
-        
-        // Attach event listeners to stock inputs and action buttons
-        document.querySelectorAll('.stock-input').forEach(input => {
-            input.addEventListener('change', async (e) => {
-                const id = e.target.dataset.id;
-                const newStock = parseInt(e.target.value);
-                await supabase.from('products').update({ stock: newStock }).eq('id', id);
-                loadProducts(); // refresh
-            });
+        // ========== AUTH STATE LISTENER ==========
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            currentUser = session?.user ?? null;
+            if (currentUser) {
+                showAdminPanel(currentUser.email);
+                loadProducts();
+            }
         });
-        
-        document.querySelectorAll('.action-btn.edit').forEach(btn => {
-            btn.addEventListener('click', async () => editProduct(btn.dataset.id));
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            currentUser = session?.user ?? null;
+            if (currentUser) {
+                showAdminPanel(currentUser.email);
+                loadProducts();
+            } else {
+                loginScreen.style.display = 'block';
+                adminPanel.style.display = 'none';
+            }
         });
-        
-        document.querySelectorAll('.action-btn.delete').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                if (confirm('Delete this product?')) {
-                    await supabase.from('products').delete().eq('id', btn.dataset.id);
-                    loadProducts();
-                }
-            });
-        });
-    }
 
-    // ========== EDIT PRODUCT ==========
-    async function editProduct(id) {
-        const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
-        if (error) return alert('Error loading product');
-        
-        document.getElementById('productId').value = data.id;
-        document.getElementById('productName').value = data.name;
-        document.getElementById('productSku').value = data.sku;
-        document.getElementById('productPrice').value = data.price;
-        document.getElementById('productStock').value = data.stock;
-        document.getElementById('productCategory').value = data.category || 'faucets';
-        document.getElementById('formTitle').innerText = 'Edit Product';
-        
-        const preview = document.getElementById('imagePreviewContainer');
-        preview.innerHTML = data.image_url ? `<img src="${data.image_url}" style="max-width:100px; max-height:100px;">` : '';
-    }
+        // ========== LOGIN ==========
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                loginError.innerText = error.message;
+            } else {
+                loginError.innerText = '';
+            }
+        }
+        loginBtn.addEventListener('click', handleLogin);
 
-    // ========== RESET FORM ==========
-    function resetForm() {
-        productForm.reset();
-        document.getElementById('productId').value = '';
-        document.getElementById('formTitle').innerText = 'Add New Product';
-        document.getElementById('imagePreviewContainer').innerHTML = '';
-    }
-    cancelBtn.addEventListener('click', resetForm);
+        // ========== LOGOUT ==========
+        async function handleLogout() {
+            await supabase.auth.signOut();
+        }
+        logoutBtn.addEventListener('click', handleLogout);
 
-    // ========== SAVE PRODUCT ==========
-    productForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const id = document.getElementById('productId').value;
-        const name = document.getElementById('productName').value;
-        const sku = document.getElementById('productSku').value;
-        const price = parseFloat(document.getElementById('productPrice').value);
-        const stock = parseInt(document.getElementById('productStock').value);
-        const category = document.getElementById('productCategory').value;
-        const imageFile = document.getElementById('productImage').files[0];
-        
-        let image_url = null;
-        
-        if (imageFile) {
-            const fileName = `${Date.now()}_${imageFile.name}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage.from('product-images').upload(fileName, imageFile);
-            if (uploadError) {
-                alert('Image upload failed: ' + uploadError.message);
+        function showAdminPanel(email) {
+            loginScreen.style.display = 'none';
+            adminPanel.style.display = 'block';
+            userEmailSpan.innerText = email;
+        }
+
+        // ========== LOAD PRODUCTS ==========
+        async function loadProducts() {
+            const { data, error } = await supabase.from('products').select('*').order('name');
+            if (error) {
+                console.error('Error loading products:', error);
                 return;
             }
-            const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName);
-            image_url = publicUrl;
+            
+            productTableBody.innerHTML = data.map(product => `
+                <tr>
+                    <td><img src="${product.image_url || 'https://placehold.co/50x50'}" class="image-preview" onerror="this.src='https://placehold.co/50x50'"></td>
+                    <td>${product.name}</td>
+                    <td>${product.sku}</td>
+                    <td>R${parseFloat(product.price).toFixed(2)}</td>
+                    <td><input type="number" class="stock-input" value="${product.stock}" data-id="${product.id}" min="0"></td>
+                    <td>
+                        <button class="action-btn edit" data-id="${product.id}"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete" data-id="${product.id}"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Attach event listeners
+            document.querySelectorAll('.stock-input').forEach(input => {
+                input.addEventListener('change', async (e) => {
+                    const id = e.target.dataset.id;
+                    const newStock = parseInt(e.target.value);
+                    await supabase.from('products').update({ stock: newStock }).eq('id', id);
+                    loadProducts();
+                });
+            });
+            
+            document.querySelectorAll('.action-btn.edit').forEach(btn => {
+                btn.addEventListener('click', () => editProduct(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (confirm('Delete this product?')) {
+                        await supabase.from('products').delete().eq('id', btn.dataset.id);
+                        loadProducts();
+                    }
+                });
+            });
         }
-        
-        const productData = { name, sku, price, stock, category };
-        if (image_url) productData.image_url = image_url;
-        
-        let error;
-        if (id) {
-            ({ error } = await supabase.from('products').update(productData).eq('id', id));
-        } else {
-            ({ error } = await supabase.from('products').insert([productData]));
+
+        // ========== EDIT PRODUCT ==========
+        async function editProduct(id) {
+            const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
+            if (error) return alert('Error loading product');
+            
+            productIdInput.value = data.id;
+            productNameInput.value = data.name;
+            productSkuInput.value = data.sku;
+            productPriceInput.value = data.price;
+            productStockInput.value = data.stock;
+            productCategorySelect.value = data.category || 'faucets';
+            formTitle.innerText = 'Edit Product';
+            
+            imagePreviewContainer.innerHTML = data.image_url ? `<img src="${data.image_url}" style="max-width:100px; max-height:100px;">` : '';
         }
-        
-        if (error) {
-            alert('Error saving product: ' + error.message);
-        } else {
-            alert('Product saved!');
-            resetForm();
-            loadProducts();
+
+        // ========== RESET FORM ==========
+        function resetForm() {
+            productForm.reset();
+            productIdInput.value = '';
+            formTitle.innerText = 'Add New Product';
+            imagePreviewContainer.innerHTML = '';
         }
-    });
+        cancelFormBtn.addEventListener('click', resetForm);
+
+        // ========== SAVE PRODUCT ==========
+        productForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = productIdInput.value;
+            const name = productNameInput.value;
+            const sku = productSkuInput.value;
+            const price = parseFloat(productPriceInput.value);
+            const stock = parseInt(productStockInput.value);
+            const category = productCategorySelect.value;
+            const imageFile = productImageInput.files[0];
+            
+            let image_url = null;
+            
+            if (imageFile) {
+                const fileName = `${Date.now()}_${imageFile.name}`;
+                const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, imageFile);
+                if (uploadError) {
+                    alert('Image upload failed: ' + uploadError.message);
+                    return;
+                }
+                const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName);
+                image_url = publicUrl;
+            }
+            
+            const productData = { name, sku, price, stock, category };
+            if (image_url) productData.image_url = image_url;
+            
+            let error;
+            if (id) {
+                ({ error } = await supabase.from('products').update(productData).eq('id', id));
+            } else {
+                ({ error } = await supabase.from('products').insert([productData]));
+            }
+            
+            if (error) {
+                alert('Error saving product: ' + error.message);
+            } else {
+                alert('Product saved!');
+                resetForm();
+                loadProducts();
+            }
+        });
+    })();
 </script>
 </body>
 </html>
