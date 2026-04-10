@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Shrine IT Solutions - Shrine Enterprises</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 15px 40px;
+            border-bottom: 3px solid #f2b233;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo img {
+            height: 80px;
+            width: auto;
+            display: block;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 35px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 16px;
+            letter-spacing: 0.3px;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #f2b233;
+        }
+
+        /* Hero Section - Beautiful gradient */
+        .hero-gradient {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #0e2c4d 0%, #1a4a7a 100%);
+            color: white;
+        }
+
+        .hero-logo {
+            width: 170px;
+            height: 170px;
+            margin: 0 auto 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-logo .placeholder-logo {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: #f2b233;
+        }
+
+        .hero-gradient h1 {
+            font-size: 64px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .hero-gradient .subtitle {
+            font-size: 24px;
+            color: #f2b233;
+            margin-bottom: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hero-gradient .with-name {
+            font-size: 20px;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .hero-gradient p {
+            font-size: 20px;
+            max-width: 700px;
+            margin: 20px auto 0;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .section-title {
+            font-size: 42px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            font-family: 'Playfair Display', serif;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-title:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: #f2b233;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 18px;
+            margin-bottom: 50px;
+        }
+
+        /* About Section */
+        .about-text {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .about-text p {
+            color: #475569;
+            font-size: 18px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0e7c8c 0%, #1a9fb0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #1e293b;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .card p {
+            color: #64748b;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* Quote Box */
+        .quote-box {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #f1f5f9;
+            border-left: 4px solid #f2b233;
+            font-style: italic;
+            color: #334155;
+            font-size: 18px;
+            border-radius: 0 12px 12px 0;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: #f8fafc;
+        }
+
+        .cta-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .cta-text {
+            color: #64748b;
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            padding: 14px 40px;
+            background: #0e2c4d;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #f2b233;
+            color: #0e2c4d;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 40px;
+            background: transparent;
+            color: #0e2c4d;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s;
+            border: 2px solid #0e2c4d;
+        }
+
+        .btn-secondary:hover {
+            background: #0e2c4d;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            background: #0f172a;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-links {
+                gap: 20px;
+            }
+            
+            .hero-gradient h1 {
+                font-size: 42px;
+            }
+            
+            .hero-gradient .subtitle {
+                font-size: 18px;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">
+                <img src="https://netaniachetty.github.io/ShrineEnt/shrine.jpeg" alt="SHRINE ENTERPRISES">
+            </div>
+            <nav class="nav-links">
+                <a href="index.html">HOME</a>
+                <a href="index.html#services">SERVICES</a>
+                <a href="index.html#about">ABOUT</a>
+                <a href="index.html#contact">CONTACT</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient">
+        <div class="hero-logo">
+            <div class="placeholder-logo">💻</div>
+        </div>
+        <h1>SHRINE IT SOLUTIONS</h1>
+        <div class="subtitle">IT SERVICES & WEBSITE BUILDING</div>
+        <div class="with-name">with Netania Chetty</div>
+        <p>Modern IT solutions and stunning website design to take your business to the next level. From concept to launch, we build your digital presence.</p>
+    </section>
+
+    <!-- About Section -->
+    <div class="container">
+        <div class="about-text">
+            <h2 class="section-title">About Shrine IT Solutions</h2>
+            <p>Shrine IT Solutions is the technology division of <strong>SHRINE ENTERPRISES</strong>, led by Netania Chetty. We specialize in creating digital experiences that help businesses grow and thrive in the modern online landscape.</p>
+            <p>From concept to launch, we work closely with our clients to understand their vision and deliver solutions that exceed expectations. Whether you need a simple website or a complete digital transformation, we have the expertise to bring your ideas to life.</p>
+        </div>
+    </div>
+
+    <!-- Services Section -->
+    <div class="container">
+        <h2 class="section-title">What We Offer</h2>
+        <p class="section-subtitle">Comprehensive technology services for modern businesses</p>
+
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-icon">🌐</div>
+                <h3>Website Development</h3>
+                <p>Custom, responsive websites designed to showcase your brand and convert visitors into customers. Mobile-first, modern designs.</p>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🛠️</div>
+                <h3>IT Support</h3>
+                <p>Reliable technical support and troubleshooting to keep your business running smoothly.</p>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🛒</div>
+                <h3>Basic Computer Training</h3>
+                <p>Master Microsoft Office essentials<br>
+Learn Word, Excel, and Outlook at your own pace. Perfect for beginners or anyone wanting to build confidence with everyday business software..</p>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <h3>Digital Strategy</h3>
+                <p>Strategic guidance to help you leverage technology for business growth and efficiency.</p>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🔧</div>
+                <h3>Website Maintenance</h3>
+                <p>Ongoing support and updates to keep your site secure, fast, and up-to-date.</p>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📱</div>
+                <h3>Social Media Jumpstart & Basic Management</h3>
+                <p>Social page setup + Canva training. Tailored</p>
+            </div>
+        </div>
+
+        <div class="quote-box">
+            Every business is unique. We tailor our IT solutions to match your specific needs, goals, and budget.
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2 class="cta-title">Ready to Go Digital?</h2>
+        <p class="cta-text">Let's build something amazing together. Get in touch to discuss your project and get a personalised quote.</p>
+        
+        <div class="cta-buttons">
+            <a href="index.html#contact" class="btn-primary">Start Your Project</a>
+            <a href="index.html" class="btn-secondary">← Back to Home</a>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© 2026 Shrine Enterprises. All rights reserved.</p>
+    </footer>
+</body>
+</html>

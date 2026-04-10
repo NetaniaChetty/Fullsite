@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart | Shrine Enterprises</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Hidden Netlify Form -->
+    <form name="plumbing-order" method="POST" netlify netlify-honeypot="bot-field" hidden>
+        <input type="hidden" name="form-name" value="plumbing-order">
+        <input type="hidden" name="bot-field">
+        <input type="hidden" name="orderNumber" id="formOrderNumber">
+        <input type="hidden" name="orderTotal" id="formOrderTotal">
+        <input type="hidden" name="orderItems" id="formOrderItems">
+    </form>
+
+    <!-- Till Slip Modal -->
+    <div class="modal" id="tillModal">
+        <div class="modal-content">
+            <div class="till-header">
+                <h2>🧾 PROFORMA INVOICE / TILL SLIP</h2>
+                <p>Shrine Enterprises - Plumbing Division</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-weight: 600;">YOUR ORDER NUMBER</div>
+                <div class="order-number" id="displayOrderNumber"></div>
+            </div>
+            <div style="margin: 20px 0;">
+                <h3>Order Summary</h3>
+                <div id="orderItemsList"></div>
+                <div style="display: flex; justify-content: space-between; font-weight: 700; margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                    <span>TOTAL DUE:</span>
+                    <span id="modalTotal"></span>
+                </div>
+            </div>
+            <div class="bank-details">
+                <h3><i class="fas fa-university"></i> BANKING DETAILS (EFT)</h3>
+                <!-- UPDATE THESE WITH REAL BANKING INFO -->
+                <div class="bank-row"><span class="bank-label">Bank:</span><span class="bank-value">FIRST NATIONAL BANK (FNB)</span></div>
+                <div class="bank-row"><span class="bank-label">Account Name:</span><span class="bank-value">SHRINE ENTERPRISES</span></div>
+                <div class="bank-row"><span class="bank-label">Account Number:</span><span class="bank-value">6277 3398 2145</span></div>
+                <div class="bank-row"><span class="bank-label">Branch Code:</span><span class="bank-value">250655</span></div>
+                <div class="bank-row"><span class="bank-label">Reference:</span><span class="bank-value" id="refReminder"></span></div>
+            </div>
+            <div class="eft-instruction">
+                ⚠️ PLEASE USE YOUR ORDER NUMBER AS PAYMENT REFERENCE<br>
+                <small>Goods reserved 24h pending proof of payment.</small>
+            </div>
+            <button class="close-modal" onclick="closeModal()">Close</button>
+            <p style="text-align: center; margin-top: 12px; font-size: 0.75rem;">Email POP to accounts@shrine.co.za</p>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">
+                <img src="https://netaniachetty.github.io/ShrineEnt/shrine.jpeg" alt="SHRINE ENTERPRISES">
+            </div>
+            <nav class="nav-links">
+                <a href="index.html">HOME</a>
+                <a href="index.html#services">SERVICES</a>
+                <a href="index.html#about">ABOUT</a>
+                <a href="index.html#contact">CONTACT</a>
+                <a href="cart.html" class="cart-widget">
+                    <i class="fas fa-shopping-cart"></i> Cart (<span id="cartCount">0</span>)
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="cart-page-container">
+        <h1 style="font-family: 'Playfair Display', serif; margin-bottom: 30px;">Your Shopping Cart</h1>
+        
+        <div id="cartContent">
+            <p>Loading cart...</p>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+            <a href="store.html" class="btn-secondary"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
+            <button class="btn-primary" id="checkoutBtn" onclick="processCheckout()" disabled>Proceed to EFT Checkout</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 Shrine Enterprises. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://cgtfqgjlarzzcxrtgzsf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNndGZxZ2psYXJ6emN4cnRnenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTIyMTgsImV4cCI6MjA5MTM4ODIxOH0.D7rz1DWhPCAv1mhXsniebPgtqFzIl5vOXFgR4axNYAc';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let cart = JSON.parse(localStorage.getItem('shrineCart')) || [];
+
+        function updateCartCount() {
+            const totalItems = cart.reduce((s, i) => s + i.quantity, 0);
+            document.getElementById('cartCount').innerText = totalItems;
+        }
+
+        function calculateTotal() {
+            return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        }
+
+        function renderCartPage() {
+            const container = document.getElementById('cartContent');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px;">Your cart is empty. <a href="store.html">Start shopping</a>.</p>';
+                checkoutBtn.disabled = true;
+                return;
+            }
+            
+            let html = '<table class="cart-table"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Quantity</th><th>Total</th><th></th></tr></thead><tbody>';
+            cart.forEach(item => {
+                html += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.sku}</td>
+                    <td>R${parseFloat(item.price).toFixed(2)}</td>
+                    <td>
+                        <button class="cart-item-btn" onclick="updateQty(${item.id}, -1)">−</button>
+                        <span style="margin: 0 10px;">${item.quantity}</span>
+                        <button class="cart-item-btn" onclick="updateQty(${item.id}, 1)">+</button>
+                    </td>
+                    <td>R${(item.price * item.quantity).toFixed(2)}</td>
+                    <td><button class="cart-item-btn remove-btn" onclick="removeItem(${item.id})"><i class="fas fa-trash-alt"></i></button></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            html += `<div style="text-align: right; font-size: 1.5rem; font-weight: 700; margin-top: 20px;">Total: R${calculateTotal().toFixed(2)}</div>`;
+            container.innerHTML = html;
+            checkoutBtn.disabled = false;
+            updateCartCount();
+        }
+
+        window.updateQty = function(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            const newQty = item.quantity + delta;
+            if (newQty <= 0) cart = cart.filter(i => i.id !== id);
+            else if (newQty <= item.stock) item.quantity = newQty;
+            else { alert(`Only ${item.stock} units available.`); return; }
+            localStorage.setItem('shrineCart', JSON.stringify(cart));
+            renderCartPage();
+        };
+
+        window.removeItem = function(id) {
+            cart = cart.filter(i => i.id !== id);
+            localStorage.setItem('shrineCart', JSON.stringify(cart));
+            renderCartPage();
+        };
+
+        window.processCheckout = async function() {
+            if (cart.length === 0) return;
+            const btn = document.getElementById('checkoutBtn');
+            btn.disabled = true;
+            btn.innerText = 'Processing...';
+            
+            try {
+                // Get next order number
+                const { data: orderNumber, error: seqError } = await supabase.rpc('next_order_number');
+                if (seqError) throw seqError;
+                
+                const total = calculateTotal();
+                const itemsJson = cart.map(item => ({
+                    product_id: item.id, name: item.name, sku: item.sku,
+                    quantity: item.quantity, unit_price: item.price
+                }));
+                
+                // Save order to Supabase
+                const { error: orderError } = await supabase
+                    .from('orders')
+                    .insert([{ order_number: orderNumber, items: itemsJson, total: total, status: 'pending' }]);
+                if (orderError) throw orderError;
+                
+                // Update stock
+                for (const item of cart) {
+                    const { data: product } = await supabase.from('products').select('stock').eq('id', item.id).single();
+                    if (product) {
+                        const newStock = Math.max(0, product.stock - item.quantity);
+                        await supabase.from('products').update({ stock: newStock }).eq('id', item.id);
+                    }
+                }
+                
+                // Submit to Netlify Forms for email
+                const form = document.forms['plumbing-order'];
+                document.getElementById('formOrderNumber').value = orderNumber;
+                document.getElementById('formOrderTotal').value = `R${total.toFixed(2)}`;
+                const itemsText = cart.map(item => `${item.quantity} x ${item.name} (SKU: ${item.sku})`).join('\n');
+                document.getElementById('formOrderItems').value = itemsText;
+                
+                const formData = new FormData(form);
+                fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(formData).toString() })
+                    .catch(err => console.warn('Netlify Forms error:', err));
+                
+                // Show till slip
+                document.getElementById('displayOrderNumber').innerText = orderNumber;
+                document.getElementById('refReminder').innerText = orderNumber;
+                const itemsDiv = document.getElementById('orderItemsList');
+                itemsDiv.innerHTML = cart.map(item => 
+                    `<div style="display: flex; justify-content: space-between;">${item.quantity} x ${item.name} <span>R${(item.price * item.quantity).toFixed(2)}</span></div>`
+                ).join('');
+                document.getElementById('modalTotal').innerText = `R${total.toFixed(2)}`;
+                document.getElementById('tillModal').style.display = 'flex';
+                
+                // Clear cart
+                cart = [];
+                localStorage.removeItem('shrineCart');
+                renderCartPage();
+                
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('Checkout failed. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Proceed to EFT Checkout';
+            }
+        };
+
+        window.closeModal = function() {
+            document.getElementById('tillModal').style.display = 'none';
+            window.location.href = 'store.html';
+        };
+
+        // Initialize
+        renderCartPage();
+        updateCartCount();
+    </script>
+</body>
+</html>

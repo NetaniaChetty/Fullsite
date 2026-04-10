@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Shrine Enterprises</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">
+                <img src="https://netaniachetty.github.io/ShrineEnt/shrine.jpeg" alt="SHRINE ENTERPRISES">
+            </div>
+            <nav class="nav-links">
+                <a href="#home">HOME</a>
+                <a href="#services">SERVICES</a>
+                <a href="#about">ABOUT</a>
+                <a href="#contact">CONTACT</a>
+                <a href="store.html" class="cart-widget">
+                    <i class="fas fa-shopping-cart"></i> Cart (<span id="cartCount">0</span>)
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <section id="home" class="hero">
+        <h1>SHRINE ENTERPRISES</h1>
+        <p>Your trusted partner in wellness, entertainment, plumbing & technology</p>
+        <a href="#services" class="main-btn">Explore Our Services</a>
+    </section>
+
+    <section id="about" class="about" style="padding: 80px 20px; text-align: center; max-width: 900px; margin: 0 auto;">
+        <h2 style="font-size: 42px; margin-bottom: 20px; font-family: 'Playfair Display', serif;">About Shrine Enterprises</h2>
+        <p style="font-size: 18px; line-height: 1.8; color: #475569;">Shrine Enterprises is a multi-service company based in South Africa. We offer professional services in wellness coaching, entertainment, plumbing solutions and IT services. Our goal is to provide reliable, high-quality services that support individuals, families and businesses.</p>
+    </section>
+
+    <section id="services" class="services" style="background: #f8fafc; padding: 80px 20px; text-align: center;">
+        <h2 style="font-size: 42px; margin-bottom: 20px; font-family: 'Playfair Display', serif;">Our Services</h2>
+        <p style="font-size: 18px; color: #64748b; margin-bottom: 50px;">A diverse range of professional services under one trusted name</p>
+
+        <div class="services-grid">
+            <div class="service-card">
+                <h3>SHRINE WELLNESS</h3>
+                <div style="color: #f2b233; font-weight: 600;">HEALTH & WELLNESS COACHING</div>
+                <div style="color: #64748b; font-style: italic; margin-bottom: 15px;">with Nervani Sahadeo</div>
+                <p>Building your inner self through holistic health and wellness coaching. Transform your mind, body, and spirit with personalised guidance.</p>
+                <a href="wellness.html" class="learn-more" style="display: inline-block; padding: 10px 25px; background: #0e2c4d; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px;">Learn More →</a>
+            </div>
+            <div class="service-card">
+                <h3>CHUNE WITH SONE</h3>
+                <div style="color: #f2b233; font-weight: 600;">MC & ENTERTAINMENT SERVICES</div>
+                <div style="color: #64748b; font-style: italic; margin-bottom: 15px;">with Sonehri</div>
+                <p>Bringing the energy, vibes, and unforgettable moments to your events. Professional MC services for weddings, parties, and corporate functions.</p>
+                <a href="sone.html" class="learn-more" style="display: inline-block; padding: 10px 25px; background: #0e2c4d; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px;">Learn More →</a>
+            </div>
+            <div class="service-card">
+                <h3>SHRINE PLUMBING</h3>
+                <div style="color: #f2b233; font-weight: 600;">PLUMBING SUPPLIES & SERVICES</div>
+                <p>Quality plumbing parts and professional services. Browse our online store for valves, fittings, tools, and more.</p>
+                <a href="store.html" class="learn-more" style="display: inline-block; padding: 10px 25px; background: #0e2c4d; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px;">Shop Now →</a>
+            </div>
+            <div class="service-card">
+                <h3>SHRINE IT SOLUTIONS</h3>
+                <div style="color: #f2b233; font-weight: 600;">IT SERVICES & WEBSITE BUILDING</div>
+                <div style="color: #64748b; font-style: italic; margin-bottom: 15px;">with Netania Chetty</div>
+                <p>Modern IT solutions and stunning website design to take your business to the next level. From concept to launch, we build your digital presence.</p>
+                <a href="IT.html" class="learn-more" style="display: inline-block; padding: 10px 25px; background: #0e2c4d; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px;">Learn More →</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact" style="background: #0e2c4d; color: white; padding: 80px 20px; text-align: center;">
+        <h2 style="font-size: 42px; margin-bottom: 20px; font-family: 'Playfair Display', serif;">Contact Us Today</h2>
+        <div style="margin-bottom: 40px;">
+            <p>✉️ netania.chetty@gmail.com</p>
+            <p>📍 South Africa</p>
+        </div>
+        <div style="max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.05); padding: 40px; border-radius: 16px;">
+            <h3 style="margin-bottom: 30px;">Send Us A Message</h3>
+            <form action="https://formsubmit.co/netania.chetty@gmail.com" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
+                <input type="hidden" name="_subject" value="New enquiry from Shrine Enterprises">
+                <input type="hidden" name="_template" value="table">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_next" value="https://netaniachetty.github.io/ShrineEnt/#contact">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <input type="text" name="name" placeholder="Name *" required style="padding: 15px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: white;">
+                    <input type="email" name="email" placeholder="Email *" required style="padding: 15px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+                <input type="tel" name="phone" placeholder="Phone" style="padding: 15px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: white;">
+                <select name="service" style="padding: 15px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: white;">
+                    <option value="">Select a service</option>
+                    <option value="Shrine Wellness">Shrine Wellness</option>
+                    <option value="Chune With Sone">Chune With Sone</option>
+                    <option value="Shrine Plumbing">Shrine Plumbing</option>
+                    <option value="Shrine IT Solutions">Shrine IT Solutions</option>
+                </select>
+                <textarea name="message" placeholder="Message *" rows="5" required style="padding: 15px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: white;"></textarea>
+                <button type="submit" style="padding: 16px; background: #f2b233; color: #0e2c4d; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© 2026 Shrine Enterprises. All rights reserved.</p>
+        <p style="margin-top: 10px; opacity: 0.5;"><a href="admin.html" style="color: #666;">Admin</a></p>
+    </footer>
+
+    <script>
+        // Simple cart count display (reads from localStorage)
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('shrineCart')) || [];
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').innerText = totalItems;
+        }
+        updateCartCount();
+        // Listen for storage changes
+        window.addEventListener('storage', updateCartCount);
+    </script>
+</body>
+</html>
