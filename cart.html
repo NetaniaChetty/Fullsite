@@ -50,9 +50,6 @@
             border-color: #f2b233;
             box-shadow: 0 0 0 3px rgba(242, 178, 51, 0.1);
         }
-        .form-group input:invalid {
-            border-color: #ef4444;
-        }
         .required:after {
             content: " *";
             color: #ef4444;
@@ -63,25 +60,32 @@
                 gap: 0;
             }
         }
+        /* Hidden iframe for form submission */
+        #hiddenFrame {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <!-- Hidden Netlify Form (now includes customer info) -->
-    <form name="plumbing-order" method="POST" netlify netlify-honeypot="bot-field" hidden>
-        <input type="hidden" name="form-name" value="plumbing-order">
+    <!-- Hidden iframe to capture form submission without navigation -->
+    <iframe name="hiddenFrame" id="hiddenFrame"></iframe>
+
+    <!-- Hidden Netlify Form (renamed to avoid caching issues) -->
+    <form name="shrine-plumbing-order-v1" method="POST" netlify netlify-honeypot="bot-field" target="hiddenFrame" hidden>
+        <input type="hidden" name="form-name" value="shrine-plumbing-order-v1">
         <input type="hidden" name="bot-field">
-        <input type="hidden" name="orderNumber" id="formOrderNumber">
-        <input type="hidden" name="orderTotal" id="formOrderTotal">
-        <input type="hidden" name="orderItems" id="formOrderItems">
-        <input type="hidden" name="customerName" id="formCustomerName">
-        <input type="hidden" name="customerEmail" id="formCustomerEmail">
-        <input type="hidden" name="customerPhone" id="formCustomerPhone">
-        <input type="hidden" name="shippingAddress" id="formShippingAddress">
-        <input type="hidden" name="shippingCity" id="formShippingCity">
-        <input type="hidden" name="shippingPostalCode" id="formShippingPostalCode">
+        <input type="hidden" name="orderNumber">
+        <input type="hidden" name="orderTotal">
+        <input type="hidden" name="orderItems">
+        <input type="hidden" name="customerName">
+        <input type="hidden" name="customerEmail">
+        <input type="hidden" name="customerPhone">
+        <input type="hidden" name="shippingAddress">
+        <input type="hidden" name="shippingCity">
+        <input type="hidden" name="shippingPostalCode">
     </form>
 
-    <!-- Till Slip Modal (updated to show shipping details) -->
+    <!-- Till Slip Modal -->
     <div class="modal" id="tillModal">
         <div class="modal-content">
             <div class="till-header">
@@ -115,7 +119,7 @@
                 <small>Goods reserved 24h pending proof of payment.</small>
             </div>
             <button class="close-modal" onclick="window.closeModal()">Close</button>
-            <p style="text-align: center; margin-top: 12px; font-size: 0.75rem;">Email POP to orders.shrine@gmail.com</p>
+            <p style="text-align: center; margin-top: 12px; font-size: 0.75rem;">Email POP to accounts@shrine.co.za</p>
         </div>
     </div>
 
@@ -203,12 +207,10 @@
 
             let cart = JSON.parse(localStorage.getItem('shrineCart')) || [];
 
-            // DOM elements
             const checkoutFormSection = document.getElementById('checkoutFormSection');
             const checkoutBtn = document.getElementById('checkoutBtn');
             const shippingForm = document.getElementById('shippingForm');
             
-            // Form inputs
             const nameInput = document.getElementById('customerName');
             const emailInput = document.getElementById('customerEmail');
             const phoneInput = document.getElementById('customerPhone');
@@ -237,14 +239,9 @@
             }
 
             function updateCheckoutButtonState() {
-                if (cart.length > 0 && validateShippingForm()) {
-                    checkoutBtn.disabled = false;
-                } else {
-                    checkoutBtn.disabled = true;
-                }
+                checkoutBtn.disabled = !(cart.length > 0 && validateShippingForm());
             }
 
-            // Attach input listeners to enable checkout button when form is valid
             [nameInput, emailInput, phoneInput, addressInput, cityInput, postalInput].forEach(input => {
                 if (input) input.addEventListener('input', updateCheckoutButtonState);
             });
@@ -259,7 +256,6 @@
                     return;
                 }
                 
-                // Show the shipping form
                 checkoutFormSection.style.display = 'block';
                 
                 let html = '<table class="cart-table"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Quantity</th><th>Total</th><th></th></tr></thead><tbody>';
@@ -315,6 +311,7 @@
                 btn.innerText = 'Processing...';
                 
                 try {
+                    // 1. Get order number
                     const orderNumberData = await supabase.rpc('next_order_number');
                     const orderNumber = orderNumberData.data;
                     if (orderNumberData.error) throw orderNumberData.error;
@@ -328,7 +325,6 @@
                         unit_price: item.price
                     }));
                     
-                    // Prepare customer info object
                     const customerInfo = {
                         name: nameInput.value.trim(),
                         email: emailInput.value.trim(),
@@ -339,7 +335,7 @@
                         postal_code: postalInput.value.trim()
                     };
                     
-                    // Save order to Supabase (add customer_info column if not exists)
+                    // 2. Save order to Supabase
                     const { error: orderError } = await supabase
                         .from('orders')
                         .insert([{
@@ -352,7 +348,7 @@
                         }]);
                     if (orderError) throw orderError;
                     
-                    // Update stock
+                    // 3. Update stock
                     for (const item of cart) {
                         const { data: product } = await supabase.from('products').select('stock').eq('id', item.id).single();
                         if (product) {
@@ -361,42 +357,39 @@
                         }
                     }
                     
-                    // Submit to Netlify Forms
-                    const form = document.forms['plumbing-order'];
-                    document.getElementById('formOrderNumber').value = orderNumber;
-                    document.getElementById('formOrderTotal').value = `R${total.toFixed(2)}`;
-                    document.getElementById('formOrderItems').value = cart.map(item => `${item.quantity} x ${item.name} (SKU: ${item.sku})`).join('\n');
-                    document.getElementById('formCustomerName').value = customerInfo.name;
-                    document.getElementById('formCustomerEmail').value = customerInfo.email;
-                    document.getElementById('formCustomerPhone').value = customerInfo.phone;
-                    document.getElementById('formShippingAddress').value = customerInfo.address;
-                    document.getElementById('formShippingCity').value = customerInfo.city;
-                    document.getElementById('formShippingPostalCode').value = customerInfo.postal_code;
+                    // 4. Submit to Netlify Forms via traditional form submit (reliable)
+                    const form = document.forms['shrine-plumbing-order-v1'];
+                    form.elements['orderNumber'].value = orderNumber;
+                    form.elements['orderTotal'].value = `R${total.toFixed(2)}`;
+                    form.elements['orderItems'].value = cart.map(item => `${item.quantity} x ${item.name} (SKU: ${item.sku})`).join('\n');
+                    form.elements['customerName'].value = customerInfo.name;
+                    form.elements['customerEmail'].value = customerInfo.email;
+                    form.elements['customerPhone'].value = customerInfo.phone;
+                    form.elements['shippingAddress'].value = customerInfo.address;
+                    form.elements['shippingCity'].value = customerInfo.city;
+                    form.elements['shippingPostalCode'].value = customerInfo.postal_code;
                     
-                    const formData = new FormData(form);
-                    fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(formData).toString() })
-                        .catch(err => console.warn('Netlify Forms error:', err));
+                    // Submit the form to the hidden iframe
+                    form.submit();
                     
-                    // Display till slip with customer details
+                    // 5. Show till slip modal
                     document.getElementById('displayOrderNumber').innerText = orderNumber;
                     document.getElementById('refReminder').innerText = orderNumber;
                     
-                    const customerDetailsDiv = document.getElementById('customerDetailsList');
-                    customerDetailsDiv.innerHTML = `
+                    document.getElementById('customerDetailsList').innerHTML = `
                         <strong>${customerInfo.name}</strong><br>
                         ${customerInfo.email} | ${customerInfo.phone}<br>
                         ${customerInfo.address}<br>
                         ${customerInfo.city}, ${customerInfo.postal_code}
                     `;
                     
-                    const itemsDiv = document.getElementById('orderItemsList');
-                    itemsDiv.innerHTML = cart.map(item => 
+                    document.getElementById('orderItemsList').innerHTML = cart.map(item => 
                         `<div style="display: flex; justify-content: space-between;">${item.quantity} x ${item.name} <span>R${(item.price * item.quantity).toFixed(2)}</span></div>`
                     ).join('');
                     document.getElementById('modalTotal').innerText = `R${total.toFixed(2)}`;
                     document.getElementById('tillModal').style.display = 'flex';
                     
-                    // Clear cart and reset form
+                    // 6. Clear cart and reset form
                     cart = [];
                     localStorage.removeItem('shrineCart');
                     shippingForm.reset();
@@ -416,7 +409,6 @@
                 window.location.href = 'store.html';
             };
 
-            // Initialize
             renderCartPage();
             updateCartCount();
         })();
