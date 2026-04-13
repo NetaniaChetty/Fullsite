@@ -71,158 +71,161 @@
     </footer>
 
     <script>
-        // Supabase config
-        const SUPABASE_URL = 'https://cgtfqgjlarzzcxrtgzsf.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNndGZxZ2psYXJ6emN4cnRnenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTIyMTgsImV4cCI6MjA5MTM4ODIxOH0.D7rz1DWhPCAv1mhXsniebPgtqFzIl5vOXFgR4axNYAc';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        (function() {
+            // Supabase config
+            const SUPABASE_URL = 'https://cgtfqgjlarzzcxrtgzsf.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNndGZxZ2psYXJ6emN4cnRnenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTIyMTgsImV4cCI6MjA5MTM4ODIxOH0.D7rz1DWhPCAv1mhXsniebPgtqFzIl5vOXFgR4axNYAc';
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let products = [];
-        let cart = JSON.parse(localStorage.getItem('shrineCart')) || [];
-        let currentFilter = 'all';
+            let products = [];
+            let cart = JSON.parse(localStorage.getItem('shrineCart')) || [];
+            let currentFilter = 'all';
 
-        async function loadProducts() {
-            const { data, error } = await supabase.from('products').select('*').order('name');
-            if (error) {
-                document.getElementById('productContainer').innerHTML = '<p class="error">Failed to load products.</p>';
-                return;
-            }
-            products = data || [];
-            renderProducts();
-        }
-
-        function getStockStatus(stock) {
-            if (stock === 0) return { text: 'Out of Stock', class: 'out-of-stock' };
-            if (stock < 5) return { text: 'Low Stock', class: 'low-stock' };
-            return { text: 'In Stock', class: 'in-stock' };
-        }
-
-        function renderProducts() {
-            const container = document.getElementById('productContainer');
-            let filtered = [...products];
-            if (currentFilter === 'inStock') filtered = products.filter(p => p.stock > 0);
-            if (currentFilter === 'lowStock') filtered = products.filter(p => p.stock > 0 && p.stock < 5);
-            
-            if (filtered.length === 0) {
-                container.innerHTML = '<p class="no-products">No products found.</p>';
-                return;
-            }
-            
-            container.innerHTML = filtered.map(product => {
-                const status = getStockStatus(product.stock);
-                const canAdd = product.stock > 0;
-                const imageUrl = product.image_url || 'https://placehold.co/400x400/1e293b/white?text=No+Image';
-                return `
-                <div class="product-card">
-                    <img src="${imageUrl}" alt="${product.name}" class="product-image" onerror="this.src='https://placehold.co/400x400/1e293b/white?text=Image+Error'">
-                    <div class="product-name">${product.name}</div>
-                    <div class="product-sku">SKU: ${product.sku}</div>
-                    <span class="stock-badge ${status.class}">${status.text} (${product.stock})</span>
-                    <div class="price">R${parseFloat(product.price).toFixed(2)}</div>
-                    <button class="btn-add" onclick="addToCart(${product.id})" ${!canAdd ? 'disabled' : ''}>
-                        ${canAdd ? 'Add to Cart' : 'Out of Stock'}
-                    </button>
-                </div>`;
-            }).join('');
-        }
-
-        // Filter buttons
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                currentFilter = e.target.dataset.filter;
+            async function loadProducts() {
+                const { data, error } = await supabase.from('products').select('*').order('name');
+                if (error) {
+                    document.getElementById('productContainer').innerHTML = '<p class="error">Failed to load products.</p>';
+                    return;
+                }
+                products = data || [];
                 renderProducts();
-            });
-        });
-
-        function getProduct(id) { return products.find(p => p.id === id); }
-
-        window.addToCart = function(productId) {
-            const product = getProduct(productId);
-            if (!product || product.stock <= 0) return;
-            const existing = cart.find(item => item.id === productId);
-            if (existing) {
-                if (existing.quantity < product.stock) existing.quantity++;
-                else { alert(`Only ${product.stock} units available.`); return; }
-            } else {
-                cart.push({ 
-                    id: productId, quantity: 1,
-                    name: product.name, sku: product.sku, price: product.price, stock: product.stock
-                });
             }
-            saveCart();
-            renderCart();
-        };
 
-        window.updateCartQuantity = function(productId, delta) {
-            const item = cart.find(i => i.id === productId);
-            if (!item) return;
-            const newQty = item.quantity + delta;
-            if (newQty <= 0) cart = cart.filter(i => i.id !== productId);
-            else if (newQty <= item.stock) item.quantity = newQty;
-            else { alert(`Cannot exceed available stock (${item.stock}).`); return; }
-            saveCart();
-            renderCart();
-        };
-
-        window.removeFromCart = function(productId) {
-            cart = cart.filter(i => i.id !== productId);
-            saveCart();
-            renderCart();
-        };
-
-        function calculateTotal() {
-            return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        }
-
-        function saveCart() {
-            localStorage.setItem('shrineCart', JSON.stringify(cart));
-            updateCartCount();
-        }
-
-        function updateCartCount() {
-            const totalItems = cart.reduce((s, i) => s + i.quantity, 0);
-            document.getElementById('cartCount').innerText = totalItems;
-        }
-
-        function renderCart() {
-            const container = document.getElementById('cartItemsContainer');
-            const totalSpan = document.getElementById('cartTotal');
-            
-            if (cart.length === 0) {
-                container.innerHTML = '<p class="empty-cart-message">Your cart is empty</p>';
-                totalSpan.innerText = 'R0.00';
-                return;
+            function getStockStatus(stock) {
+                if (stock === 0) return { text: 'Out of Stock', class: 'out-of-stock' };
+                if (stock < 5) return { text: 'Low Stock', class: 'low-stock' };
+                return { text: 'In Stock', class: 'in-stock' };
             }
-            
-            let html = '';
-            cart.forEach(item => {
-                html += `
-                <div class="cart-item">
-                    <div class="cart-item-info">
-                        <h4>${item.name}</h4>
-                        <div class="cart-item-sku">${item.sku}</div>
-                        <div>R${parseFloat(item.price).toFixed(2)} each</div>
-                    </div>
-                    <div class="cart-item-actions">
-                        <button class="cart-item-btn" onclick="updateCartQuantity(${item.id}, -1)">−</button>
-                        <span class="cart-item-qty">${item.quantity}</span>
-                        <button class="cart-item-btn" onclick="updateCartQuantity(${item.id}, 1)">+</button>
-                        <button class="cart-item-btn remove-btn" onclick="removeFromCart(${item.id})">
-                            <i class="fas fa-trash-alt"></i>
+
+            function renderProducts() {
+                const container = document.getElementById('productContainer');
+                let filtered = [...products];
+                if (currentFilter === 'inStock') filtered = products.filter(p => p.stock > 0);
+                if (currentFilter === 'lowStock') filtered = products.filter(p => p.stock > 0 && p.stock < 5);
+                
+                if (filtered.length === 0) {
+                    container.innerHTML = '<p class="no-products">No products found.</p>';
+                    return;
+                }
+                
+                container.innerHTML = filtered.map(product => {
+                    const status = getStockStatus(product.stock);
+                    const canAdd = product.stock > 0;
+                    const imageUrl = product.image_url || 'https://placehold.co/400x400/1e293b/white?text=No+Image';
+                    return `
+                    <div class="product-card">
+                        <img src="${imageUrl}" alt="${product.name}" class="product-image" onerror="this.src='https://placehold.co/400x400/1e293b/white?text=Image+Error'">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-sku">SKU: ${product.sku}</div>
+                        <span class="stock-badge ${status.class}">${status.text} (${product.stock})</span>
+                        <div class="price">R${parseFloat(product.price).toFixed(2)}</div>
+                        <button class="btn-add" onclick="window.addToCart(${product.id})" ${!canAdd ? 'disabled' : ''}>
+                            ${canAdd ? 'Add to Cart' : 'Out of Stock'}
                         </button>
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = html;
-            totalSpan.innerText = `R${calculateTotal().toFixed(2)}`;
-            updateCartCount();
-        }
+                    </div>`;
+                }).join('');
+            }
 
-        // Initialize
-        loadProducts();
-        renderCart();
-        updateCartCount();
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    renderProducts();
+                });
+            });
+
+            function getProduct(id) { return products.find(p => p.id === id); }
+
+            window.addToCart = function(productId) {
+                const product = getProduct(productId);
+                if (!product || product.stock <= 0) return;
+                const existing = cart.find(item => item.id === productId);
+                if (existing) {
+                    if (existing.quantity < product.stock) existing.quantity++;
+                    else { alert(`Only ${product.stock} units available.`); return; }
+                } else {
+                    cart.push({ 
+                        id: productId, quantity: 1,
+                        name: product.name, sku: product.sku, price: product.price, stock: product.stock
+                    });
+                }
+                saveCart();
+                renderCart();
+            };
+
+            window.updateCartQuantity = function(productId, delta) {
+                const item = cart.find(i => i.id === productId);
+                if (!item) return;
+                const newQty = item.quantity + delta;
+                if (newQty <= 0) cart = cart.filter(i => i.id !== productId);
+                else if (newQty <= item.stock) item.quantity = newQty;
+                else { alert(`Cannot exceed available stock (${item.stock}).`); return; }
+                saveCart();
+                renderCart();
+            };
+
+            window.removeFromCart = function(productId) {
+                cart = cart.filter(i => i.id !== productId);
+                saveCart();
+                renderCart();
+            };
+
+            function calculateTotal() {
+                return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            }
+
+            function saveCart() {
+                localStorage.setItem('shrineCart', JSON.stringify(cart));
+                updateCartCount();
+            }
+
+            function updateCartCount() {
+                const totalItems = cart.reduce((s, i) => s + i.quantity, 0);
+                const countEl = document.getElementById('cartCount');
+                if (countEl) countEl.innerText = totalItems;
+            }
+
+            function renderCart() {
+                const container = document.getElementById('cartItemsContainer');
+                const totalSpan = document.getElementById('cartTotal');
+                
+                if (cart.length === 0) {
+                    container.innerHTML = '<p class="empty-cart-message">Your cart is empty</p>';
+                    totalSpan.innerText = 'R0.00';
+                    return;
+                }
+                
+                let html = '';
+                cart.forEach(item => {
+                    html += `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <h4>${item.name}</h4>
+                            <div class="cart-item-sku">${item.sku}</div>
+                            <div>R${parseFloat(item.price).toFixed(2)} each</div>
+                        </div>
+                        <div class="cart-item-actions">
+                            <button class="cart-item-btn" onclick="window.updateCartQuantity(${item.id}, -1)">−</button>
+                            <span class="cart-item-qty">${item.quantity}</span>
+                            <button class="cart-item-btn" onclick="window.updateCartQuantity(${item.id}, 1)">+</button>
+                            <button class="cart-item-btn remove-btn" onclick="window.removeFromCart(${item.id})">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+                totalSpan.innerText = `R${calculateTotal().toFixed(2)}`;
+                updateCartCount();
+            }
+
+            // Initialize
+            loadProducts();
+            renderCart();
+            updateCartCount();
+        })();
     </script>
 </body>
 </html>
