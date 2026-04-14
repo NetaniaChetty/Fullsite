@@ -3,6 +3,7 @@
 <head>
     <title>Shrine Wellness - Shrine Enterprises</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -45,6 +46,7 @@
         .nav-links {
             display: flex;
             gap: 35px;
+            align-items: center;
         }
 
         .nav-links a {
@@ -60,7 +62,24 @@
             color: #f2b233;
         }
 
-        /* Hero Section - Beautiful gradient */
+        /* Cart widget - now yellow */
+        .cart-widget {
+            background: #f2b233;
+            color: #0e2c4d;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            border: 1px solid #0e2c4d;
+        }
+
+        .cart-widget:hover {
+            background: #0e2c4d;
+            color: white;
+        }
+
+        /* Hero Section */
         .hero-gradient {
             text-align: center;
             padding: 100px 20px;
@@ -215,6 +234,24 @@
             line-height: 1.7;
         }
 
+        .btn-packages {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 25px;
+            background: #0e7c4d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-packages:hover {
+            background: #f2b233;
+            color: #0e2c4d;
+        }
+
         /* Quote Box */
         .quote-box {
             max-width: 800px;
@@ -228,7 +265,7 @@
             border-radius: 0 12px 12px 0;
         }
 
-        /* ===== NEW: Badges & Moving Testimonials Styles ===== */
+        /* Badges */
         .badges-section {
             text-align: center;
             margin: 40px 0 20px;
@@ -253,6 +290,7 @@
             transform: scale(1.05);
         }
 
+        /* Testimonials - continuous loop */
         .testimonials-section {
             margin: 50px 0;
             overflow: hidden;
@@ -264,7 +302,7 @@
             display: flex;
             gap: 30px;
             width: max-content;
-            animation: scrollTestimonials 20s linear infinite;
+            animation: scrollTestimonials 25s linear infinite;
         }
         .testimonial-card {
             background: white;
@@ -273,7 +311,6 @@
             width: 320px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             flex-shrink: 0;
-            transition: transform 0.3s;
         }
         .testimonial-card p {
             font-size: 16px;
@@ -292,11 +329,9 @@
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
         }
-        /* Pause animation on hover */
         .testimonials-section:hover .testimonials-track {
             animation-play-state: paused;
         }
-        /* ===== END NEW STYLES ===== */
 
         /* CTA Section */
         .cta-section {
@@ -374,37 +409,99 @@
             padding: 30px;
         }
 
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 600px;
+            width: 90%;
+            border-radius: 20px;
+            padding: 30px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-family: 'Playfair Display', serif;
+            color: #0e2c4d;
+        }
+
+        .close-modal-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .package-option {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .package-option h3 {
+            color: #0e2c4d;
+            margin-bottom: 8px;
+        }
+
+        .package-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f2b233;
+            margin: 10px 0;
+        }
+
+        .btn-add-package {
+            background: #0e2c4d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-add-package:hover {
+            background: #f2b233;
+            color: #0e2c4d;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .nav-container {
                 flex-direction: column;
                 gap: 15px;
             }
-            
             .nav-links {
                 gap: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
             }
-            
             .hero-gradient h1 {
                 font-size: 42px;
             }
-            
-            .hero-gradient .subtitle {
-                font-size: 18px;
-            }
-            
             .cards-grid {
                 grid-template-columns: 1fr;
-            }
-            
-            .cta-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .btn-primary, .btn-secondary {
-                width: 100%;
-                text-align: center;
             }
             .badges-container {
                 gap: 20px;
@@ -433,6 +530,9 @@
                 <a href="index.html#services">SERVICES</a>
                 <a href="index.html#about">ABOUT</a>
                 <a href="index.html#contact">CONTACT</a>
+                <a href="cart.html" class="cart-widget">
+                    <i class="fas fa-shopping-cart"></i> Cart (<span id="cartCount">0</span>)
+                </a>
             </nav>
         </div>
     </header>
@@ -457,7 +557,21 @@
         </div>
     </div>
 
-    <!-- ===== NEW: ACCREDITED & CERTIFIED BADGES ===== -->
+    <!-- What We Offer Section (moved above accreditation) -->
+    <div class="container">
+        <h2 class="section-title">What We Offer</h2>
+        <p class="section-subtitle">Holistic approaches to total wellbeing</p>
+
+        <div class="cards-grid" id="servicesGrid">
+            <!-- Cards will be populated by JavaScript -->
+        </div>
+
+        <div class="quote-box">
+            Every wellness journey is unique. We tailor our programs to match your goals, lifestyle, and personal needs.
+        </div>
+    </div>
+
+    <!-- Accredited & Certified Badges -->
     <div class="container">
         <div class="badges-section">
             <h2 class="section-title">Accredited & Certified</h2>
@@ -470,71 +584,26 @@
         </div>
     </div>
 
-    <!-- ===== NEW: MOVING TESTIMONIALS ===== -->
+    <!-- Moving Testimonials (continuous loop) -->
     <div class="container">
         <div class="testimonials-section">
             <div class="testimonials-track">
-                <!-- Duplicated for seamless looping -->
-                <div class="testimonial-card">
-                    <p>“I finally feel balanced and in control of my wellness.”</p>
-                    <div class="client">– Client</div>
-                </div>
-                <div class="testimonial-card">
-                    <p>“My sleep and nutrition habits are finally consistent.”</p>
-                    <div class="client">– Client</div>
-                </div>
-                <!-- Repeat to create continuous loop -->
-                <div class="testimonial-card">
-                    <p>“I finally feel balanced and in control of my wellness.”</p>
-                    <div class="client">– Client</div>
-                </div>
-                <div class="testimonial-card">
-                    <p>“My sleep and nutrition habits are finally consistent.”</p>
-                    <div class="client">– Client</div>
-                </div>
+                <div class="testimonial-card"><p>"I finally feel balanced and in control of my wellness."</p><div class="client">– Client</div></div>
+                <div class="testimonial-card"><p>"My sleep and nutrition habits are finally consistent."</p><div class="client">– Client</div></div>
+                <div class="testimonial-card"><p>"I finally feel balanced and in control of my wellness."</p><div class="client">– Client</div></div>
+                <div class="testimonial-card"><p>"My sleep and nutrition habits are finally consistent."</p><div class="client">– Client</div></div>
             </div>
         </div>
     </div>
 
-    <!-- Services Section -->
-    <div class="container">
-        <h2 class="section-title">What We Offer</h2>
-        <p class="section-subtitle">Holistic approaches to total wellbeing</p>
-
-        <div class="cards-grid">
-            <div class="card">
-                <div class="card-icon">🧘‍♀️</div>
-                <h3>Personal Wellness Coaching</h3>
-                <p>One-on-one guidance to help you achieve your health and wellness goals through personalized strategies and support.</p>
+    <!-- Packages Modal -->
+    <div class="modal" id="packagesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalServiceTitle">Service Packages</h2>
+                <button class="close-modal-btn" onclick="closePackagesModal()">&times;</button>
             </div>
-
-            <div class="card">
-                <div class="card-icon">🌱</div>
-                <h3>Holistic Health Programs</h3>
-                <p>Comprehensive programs focusing on the connection between mind, body, and spirit for total wellbeing.</p>
-            </div>
-
-            <div class="card">
-                <div class="card-icon">🧠</div>
-                <h3>Stress Management</h3>
-                <p>Learn practical techniques to manage stress, improve mental clarity, and find balance in your daily life.</p>
-            </div>
-
-            <div class="card">
-                <div class="card-icon">🥗</div>
-                <h3>Nutritional Guidance</h3>
-                <p>Simple, sustainable approaches to nutrition that work with your lifestyle, not against it.</p>
-            </div>
-
-            <div class="card">
-                <div class="card-icon">💪</div>
-                <h3>Motivational Sessions</h3>
-                <p>Inspiring sessions designed to unlock your potential and keep you motivated on your wellness journey.</p>
-            </div>
-        </div>
-
-        <div class="quote-box">
-            Every wellness journey is unique. We tailor our programs to match your goals, lifestyle, and personal needs.
+            <div id="packagesList"></div>
         </div>
     </div>
 
@@ -542,7 +611,6 @@
     <section class="cta-section">
         <h2 class="cta-title">Ready to Transform Your Life?</h2>
         <p class="cta-text">Take the first step toward a healthier, more balanced you. Get in touch to discuss your wellness goals.</p>
-        
         <div class="cta-buttons">
             <a href="index.html#contact" class="btn-primary">Start Your Journey</a>
             <a href="index.html" class="btn-secondary">← Back to Home</a>
@@ -552,5 +620,163 @@
     <footer class="footer">
         <p>© 2026 Shrine Enterprises. All rights reserved.</p>
     </footer>
+
+    <script>
+        (function() {
+            // ---------- Cart Management ----------
+            let cart = JSON.parse(localStorage.getItem('shrineCart')) || [];
+
+            function saveCart() {
+                localStorage.setItem('shrineCart', JSON.stringify(cart));
+                updateCartCount();
+                window.dispatchEvent(new Event('storage'));
+            }
+
+            function updateCartCount() {
+                const totalItems = cart.reduce((s, i) => s + i.quantity, 0);
+                const countEl = document.getElementById('cartCount');
+                if (countEl) countEl.innerText = totalItems;
+            }
+
+            window.addToCart = function(item) {
+                const existing = cart.find(i => i.id === item.id);
+                if (existing) {
+                    existing.quantity += item.quantity || 1;
+                } else {
+                    cart.push({ ...item, quantity: item.quantity || 1 });
+                }
+                saveCart();
+                alert(`Added ${item.name} to cart!`);
+            };
+
+            // ---------- Wellness Services Data ----------
+            const services = [
+                {
+                    id: 'wellness-coaching',
+                    title: 'Personal Wellness Coaching',
+                    icon: '🧘‍♀️',
+                    description: 'One-on-one guidance to help you achieve your health and wellness goals through personalized strategies and support.',
+                    packages: [
+                        { name: 'Single Session', price: 350, description: '1-hour introductory coaching session' },
+                        { name: '4-Session Package', price: 1200, description: 'Four 1-hour sessions (save R200)' },
+                        { name: '8-Session Deep Dive', price: 2200, description: 'Eight 1-hour sessions (save R600)' }
+                    ]
+                },
+                {
+                    id: 'holistic-programs',
+                    title: 'Holistic Health Programs',
+                    icon: '🌱',
+                    description: 'Comprehensive programs focusing on the connection between mind, body, and spirit for total wellbeing.',
+                    packages: [
+                        { name: 'Monthly Wellness Plan', price: 500, description: 'Weekly check-ins and personalized plan' },
+                        { name: '3-Month Transformation', price: 1350, description: 'Full holistic program with bi-weekly sessions' },
+                        { name: '6-Month Journey', price: 2400, description: 'Complete lifestyle overhaul with ongoing support' }
+                    ]
+                },
+                {
+                    id: 'stress-management',
+                    title: 'Stress Management',
+                    icon: '🧠',
+                    description: 'Learn practical techniques to manage stress, improve mental clarity, and find balance in your daily life.',
+                    packages: [
+                        { name: 'Single Stress Relief Session', price: 300, description: '1-hour stress assessment and techniques' },
+                        { name: '4-Week Stress Reset', price: 1000, description: 'Weekly sessions with mindfulness training' },
+                        { name: 'Corporate Stress Management', price: 2500, description: 'Group workshop for up to 10 people' }
+                    ]
+                },
+                {
+                    id: 'nutritional-guidance',
+                    title: 'Nutritional Guidance',
+                    icon: '🥗',
+                    description: 'Simple, sustainable approaches to nutrition that work with your lifestyle, not against it.',
+                    packages: [
+                        { name: 'Initial Nutrition Consultation', price: 400, description: '1-hour assessment and meal planning' },
+                        { name: '3-Month Nutrition Coaching', price: 1500, description: 'Monthly sessions with ongoing support' },
+                        { name: 'Pantry Makeover + Plan', price: 600, description: 'Home visit and personalized shopping list' }
+                    ]
+                },
+                {
+                    id: 'motivational-sessions',
+                    title: 'Motivational Sessions',
+                    icon: '💪',
+                    description: 'Inspiring sessions designed to unlock your potential and keep you motivated on your wellness journey.',
+                    packages: [
+                        { name: 'Single Motivational Session', price: 250, description: '1-hour empowering coaching call' },
+                        { name: '5-Session Motivation Pack', price: 1100, description: 'Five sessions to keep you on track' },
+                        { name: 'Group Motivation Workshop', price: 1800, description: 'Up to 15 participants' }
+                    ]
+                }
+            ];
+
+            // Render service cards
+            const servicesGrid = document.getElementById('servicesGrid');
+            servicesGrid.innerHTML = services.map((service, index) => `
+                <div class="card">
+                    <div class="card-icon">${service.icon}</div>
+                    <h3>${service.title}</h3>
+                    <p>${service.description}</p>
+                    <button class="btn-packages" onclick="showPackages(${index})">See Packages →</button>
+                </div>
+            `).join('');
+
+            // Modal functions
+            let currentService = null;
+
+            window.showPackages = function(serviceIndex) {
+                currentService = services[serviceIndex];
+                document.getElementById('modalServiceTitle').innerText = currentService.title + ' - Packages';
+                
+                const packagesList = document.getElementById('packagesList');
+                packagesList.innerHTML = currentService.packages.map((pkg, idx) => `
+                    <div class="package-option">
+                        <h3>${pkg.name}</h3>
+                        <p>${pkg.description}</p>
+                        <div class="package-price">R${pkg.price.toFixed(2)}</div>
+                        <button class="btn-add-package" onclick="addPackageToCart('${currentService.id}', ${idx})">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </button>
+                    </div>
+                `).join('');
+                
+                document.getElementById('packagesModal').style.display = 'flex';
+            };
+
+            window.closePackagesModal = function() {
+                document.getElementById('packagesModal').style.display = 'none';
+            };
+
+            window.addPackageToCart = function(serviceId, packageIndex) {
+                const service = services.find(s => s.id === serviceId);
+                const pkg = service.packages[packageIndex];
+                
+                const cartItem = {
+                    id: `${serviceId}-${packageIndex}`,
+                    name: `${service.title} - ${pkg.name}`,
+                    sku: `WELL-${serviceId.substring(0,4).toUpperCase()}-${packageIndex+1}`,
+                    price: pkg.price,
+                    stock: 999,
+                    quantity: 1,
+                    type: 'wellness'
+                };
+                
+                window.addToCart(cartItem);
+                closePackagesModal();
+            };
+
+            window.onclick = function(event) {
+                const modal = document.getElementById('packagesModal');
+                if (event.target === modal) closePackagesModal();
+            };
+
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'shrineCart') {
+                    cart = JSON.parse(localStorage.getItem('shrineCart')) || [];
+                    updateCartCount();
+                }
+            });
+
+            updateCartCount();
+        })();
+    </script>
 </body>
 </html>
