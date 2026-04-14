@@ -7,6 +7,38 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Additional style for category filter bar */
+        .category-filter-bar {
+            max-width: 1200px;
+            margin: 10px auto 20px;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .category-btn {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-transform: capitalize;
+        }
+        .category-btn.active {
+            background: #f2b233;
+            color: #0e2c4d;
+            border-color: #f2b233;
+            font-weight: 600;
+        }
+        .category-btn:hover {
+            background: #f2b233;
+            color: #0e2c4d;
+        }
+    </style>
 </head>
 <body>
     <!-- Hidden Netlify Form for Email Notifications -->
@@ -40,10 +72,17 @@
         <p>Quality parts for professionals and DIY enthusiasts</p>
     </section>
 
-    <div class="filter-bar" style="max-width: 1200px; margin: 20px auto; padding: 0 20px;">
+    <!-- Stock Filter Bar -->
+    <div class="filter-bar" style="max-width: 1200px; margin: 20px auto 10px; padding: 0 20px;">
         <button class="filter-btn active" data-filter="all">All Parts</button>
         <button class="filter-btn" data-filter="inStock">In Stock</button>
         <button class="filter-btn" data-filter="lowStock">Low Stock</button>
+    </div>
+
+    <!-- Category Filter Bar (dynamically populated) -->
+    <div class="category-filter-bar" id="categoryFilterBar">
+        <button class="category-btn active" data-category="all">All Categories</button>
+        <!-- Other category buttons will be added by JavaScript -->
     </div>
 
     <div class="layout">
@@ -72,15 +111,16 @@
 
     <script>
         (function() {
-            // Supabase config
             const SUPABASE_URL = 'https://cgtfqgjlarzzcxrtgzsf.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNndGZxZ2psYXJ6emN4cnRnenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTIyMTgsImV4cCI6MjA5MTM4ODIxOH0.D7rz1DWhPCAv1mhXsniebPgtqFzIl5vOXFgR4axNYAc';
             const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
             let products = [];
             let cart = JSON.parse(localStorage.getItem('shrineCart')) || [];
-            let currentFilter = 'all';
+            let currentStockFilter = 'all';
+            let currentCategory = 'all';
 
+            // ========== LOAD PRODUCTS ==========
             async function loadProducts() {
                 const { data, error } = await supabase.from('products').select('*').order('name');
                 if (error) {
@@ -88,23 +128,61 @@
                     return;
                 }
                 products = data || [];
+                buildCategoryButtons();
                 renderProducts();
             }
 
+            // ========== BUILD CATEGORY BUTTONS ==========
+            function buildCategoryButtons() {
+                // Get unique categories from products
+                const categories = [...new Set(products.map(p => p.category).filter(c => c))].sort();
+                const categoryBar = document.getElementById('categoryFilterBar');
+                
+                // Keep the "All Categories" button and add others
+                let html = `<button class="category-btn ${currentCategory === 'all' ? 'active' : ''}" data-category="all">All Categories</button>`;
+                categories.forEach(cat => {
+                    const displayName = cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    html += `<button class="category-btn ${currentCategory === cat ? 'active' : ''}" data-category="${cat}">${displayName}</button>`;
+                });
+                categoryBar.innerHTML = html;
+                
+                // Attach event listeners
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        currentCategory = e.target.dataset.category;
+                        renderProducts();
+                    });
+                });
+            }
+
+            // ========== STOCK STATUS ==========
             function getStockStatus(stock) {
                 if (stock === 0) return { text: 'Out of Stock', class: 'out-of-stock' };
                 if (stock < 5) return { text: 'Low Stock', class: 'low-stock' };
                 return { text: 'In Stock', class: 'in-stock' };
             }
 
+            // ========== RENDER PRODUCTS (with category + stock filter) ==========
             function renderProducts() {
                 const container = document.getElementById('productContainer');
+                
+                // Apply category filter
                 let filtered = [...products];
-                if (currentFilter === 'inStock') filtered = products.filter(p => p.stock > 0);
-                if (currentFilter === 'lowStock') filtered = products.filter(p => p.stock > 0 && p.stock < 5);
+                if (currentCategory !== 'all') {
+                    filtered = filtered.filter(p => p.category === currentCategory);
+                }
+                
+                // Apply stock filter
+                if (currentStockFilter === 'inStock') {
+                    filtered = filtered.filter(p => p.stock > 0);
+                } else if (currentStockFilter === 'lowStock') {
+                    filtered = filtered.filter(p => p.stock > 0 && p.stock < 5);
+                }
                 
                 if (filtered.length === 0) {
-                    container.innerHTML = '<p class="no-products">No products found.</p>';
+                    container.innerHTML = '<p class="no-products">No products found in this category.</p>';
                     return;
                 }
                 
@@ -126,16 +204,17 @@
                 }).join('');
             }
 
-            // Filter buttons
+            // ========== STOCK FILTER BUTTONS ==========
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
-                    currentFilter = e.target.dataset.filter;
+                    currentStockFilter = e.target.dataset.filter;
                     renderProducts();
                 });
             });
 
+            // ========== CART FUNCTIONS ==========
             function getProduct(id) { return products.find(p => p.id === id); }
 
             window.addToCart = function(productId) {
