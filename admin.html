@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- JSZip for ZIP export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         .admin-container { max-width: 1200px; margin: 0 auto; }
         .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
@@ -18,12 +20,13 @@
         .product-table { width: 100%; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; }
         .product-table th { background: #0e2c4d; color: white; padding: 15px; text-align: left; }
         .product-table td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
         .image-preview { width: 50px; height: 50px; object-fit: contain; }
         .stock-input { width: 80px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; }
         .action-btn { background: none; border: none; cursor: pointer; margin: 0 5px; font-size: 1rem; }
         .action-btn.edit { color: #3b82f6; }
         .action-btn.delete { color: #ef4444; }
+        .export-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -41,9 +44,14 @@
     <div id="adminPanel" style="display: none;">
         <div class="header admin-header">
             <h1>Admin Dashboard</h1>
-            <div>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                 <span id="userEmail"></span>
-                <button class="btn-primary" id="logoutBtn" style="width: auto; padding: 8px 16px; margin-left: 10px;">Logout</button>
+                <div class="export-buttons">
+                    <button class="btn-primary" id="exportCsvBtn" style="width: auto; padding: 8px 16px; background: #0e2c4d;">📄 Export CSV</button>
+                    <button class="btn-primary" id="exportZipBtn" style="width: auto; padding: 8px 16px; background: #f2b233; color: #0e2c4d;">📦 Download ZIP</button>
+                    <button class="btn-primary" id="exportHtmlBtn" style="width: auto; padding: 8px 16px; background: #1a5c3a;">📑 Download Catalog (HTML)</button>
+                </div>
+                <button class="btn-primary" id="logoutBtn" style="width: auto; padding: 8px 16px;">Logout</button>
             </div>
         </div>
 
@@ -114,6 +122,11 @@
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
         const productTableBody = document.getElementById('productTableBody');
 
+        // Export buttons
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const exportZipBtn = document.getElementById('exportZipBtn');
+        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+
         // Auth state
         supabase.auth.getSession().then(({ data: { session } }) => {
             currentUser = session?.user ?? null;
@@ -142,6 +155,216 @@
             adminPanel.style.display = 'block';
             userEmailSpan.innerText = email;
         }
+
+        // Helper: Fetch all products
+        async function fetchAllProducts() {
+            const { data, error } = await supabase.from('products').select('*').order('name');
+            if (error) throw error;
+            return data || [];
+        }
+
+        // ---------- CSV Export ----------
+        async function exportToCSV() {
+            exportCsvBtn.disabled = true;
+            exportCsvBtn.innerText = '⏳ Exporting...';
+            try {
+                const products = await fetchAllProducts();
+                if (products.length === 0) {
+                    alert('No products to export.');
+                    return;
+                }
+                const headers = ['Name', 'SKU', 'Price (ZAR)', 'Stock', 'Category', 'Image URL'];
+                const rows = products.map(p => [
+                    `"${p.name || ''}"`,
+                    `"${p.sku || ''}"`,
+                    p.price,
+                    p.stock,
+                    `"${p.category || ''}"`,
+                    `"${p.image_url || ''}"`
+                ].join(','));
+                const csvContent = [headers.join(','), ...rows].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `inventory_${new Date().toISOString().slice(0,10)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error(error);
+                alert('CSV export failed.');
+            } finally {
+                exportCsvBtn.disabled = false;
+                exportCsvBtn.innerText = '📄 Export CSV';
+            }
+        }
+
+        // ---------- ZIP Export with Images ----------
+        async function exportToZip() {
+            exportZipBtn.disabled = true;
+            exportZipBtn.innerText = '📦 Preparing ZIP...';
+            try {
+                const products = await fetchAllProducts();
+                if (products.length === 0) {
+                    alert('No products to export.');
+                    return;
+                }
+                const zip = new JSZip();
+                const imagesFolder = zip.folder('images');
+                const csvRows = [];
+                csvRows.push(['Name', 'SKU', 'Price', 'Stock', 'Category', 'Image Filename'].join(','));
+                
+                for (let i = 0; i < products.length; i++) {
+                    const p = products[i];
+                    exportZipBtn.innerText = `📦 Processing ${i+1}/${products.length}...`;
+                    
+                    let imageFilename = '';
+                    if (p.image_url) {
+                        try {
+                            const response = await fetch(p.image_url);
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const urlParts = p.image_url.split('/');
+                                const originalName = urlParts[urlParts.length - 1] || `product_${p.id}.jpg`;
+                                imageFilename = `${p.sku || p.id}_${originalName}`;
+                                imagesFolder.file(imageFilename, blob);
+                            } else {
+                                console.warn(`Failed to fetch image for ${p.sku}: ${response.status}`);
+                            }
+                        } catch (err) {
+                            console.warn(`Error downloading image for ${p.sku}:`, err);
+                        }
+                    }
+                    csvRows.push([
+                        `"${p.name || ''}"`,
+                        `"${p.sku || ''}"`,
+                        p.price,
+                        p.stock,
+                        `"${p.category || ''}"`,
+                        `"${imageFilename}"`
+                    ].join(','));
+                }
+                
+                zip.file('catalog.csv', csvRows.join('\n'));
+                exportZipBtn.innerText = '📦 Creating ZIP file...';
+                const content = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `plumbing_catalog_${new Date().toISOString().slice(0,10)}.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+                alert('✅ Catalog downloaded successfully!');
+            } catch (error) {
+                console.error(error);
+                alert('ZIP export failed. Check console for details.');
+            } finally {
+                exportZipBtn.disabled = false;
+                exportZipBtn.innerText = '📦 Download ZIP';
+            }
+        }
+
+        // ---------- HTML Catalog Export (Nice Visual Document) ----------
+        async function exportToHtml() {
+            exportHtmlBtn.disabled = true;
+            exportHtmlBtn.innerText = '📑 Generating...';
+            try {
+                const products = await fetchAllProducts();
+                if (products.length === 0) {
+                    alert('No products to export.');
+                    return;
+                }
+
+                // Group by category
+                const categories = {};
+                products.forEach(p => {
+                    const cat = p.category || 'Uncategorized';
+                    if (!categories[cat]) categories[cat] = [];
+                    categories[cat].push(p);
+                });
+
+                // Build HTML content
+                let html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Shrine Plumbing Catalog</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
+        .header { background: #0e2c4d; color: white; padding: 30px; text-align: center; border-radius: 12px; margin-bottom: 30px; }
+        .header h1 { margin: 0; font-size: 2.5rem; }
+        .header p { margin: 10px 0 0; opacity: 0.9; }
+        .category-section { margin-bottom: 40px; }
+        .category-title { font-size: 2rem; border-bottom: 3px solid #f2b233; padding-bottom: 10px; margin-bottom: 20px; color: #0e2c4d; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .product-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .product-image { width: 100%; height: 180px; object-fit: contain; background: #f1f5f9; border-radius: 12px; margin-bottom: 15px; }
+        .product-name { font-weight: 700; font-size: 1.1rem; margin-bottom: 5px; }
+        .product-sku { color: #64748b; font-size: 0.8rem; margin-bottom: 10px; }
+        .stock-badge { display: inline-block; padding: 4px 10px; border-radius: 30px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; }
+        .in-stock { background: #dcfce7; color: #166534; }
+        .low-stock { background: #fef9c3; color: #854d0e; }
+        .out-of-stock { background: #fee2e2; color: #991b1b; }
+        .price { font-size: 1.4rem; font-weight: 700; color: #0f172a; }
+        .footer { text-align: center; margin-top: 40px; color: #64748b; }
+        @media print { body { background: white; } .product-card { break-inside: avoid; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛠️ Shrine Plumbing Catalog</h1>
+        <p>Generated on ${new Date().toLocaleDateString()}</p>
+    </div>
+`;
+
+                // Add each category
+                for (const [cat, items] of Object.entries(categories)) {
+                    const displayCat = cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    html += `<div class="category-section"><h2 class="category-title">${displayCat}</h2><div class="product-grid">`;
+                    
+                    items.forEach(p => {
+                        const imageUrl = p.image_url || 'https://placehold.co/400x400/1e293b/white?text=No+Image';
+                        let stockClass = 'in-stock', stockText = 'In Stock';
+                        if (p.stock === 0) { stockClass = 'out-of-stock'; stockText = 'Out of Stock'; }
+                        else if (p.stock < 5) { stockClass = 'low-stock'; stockText = 'Low Stock'; }
+                        
+                        html += `
+                        <div class="product-card">
+                            <img src="${imageUrl}" alt="${p.name}" class="product-image" onerror="this.src='https://placehold.co/400x400/1e293b/white?text=Image+Error'">
+                            <div class="product-name">${p.name}</div>
+                            <div class="product-sku">SKU: ${p.sku || 'N/A'}</div>
+                            <span class="stock-badge ${stockClass}">${stockText} (${p.stock})</span>
+                            <div class="price">R${parseFloat(p.price).toFixed(2)}</div>
+                        </div>`;
+                    });
+                    
+                    html += `</div></div>`;
+                }
+
+                html += `<div class="footer"><p>Shrine Enterprises — Quality Plumbing Supplies</p></div></body></html>`;
+
+                // Download as HTML file
+                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Shrine_Plumbing_Catalog_${new Date().toISOString().slice(0,10)}.html`;
+                a.click();
+                URL.revokeObjectURL(url);
+                alert('✅ HTML catalog downloaded! Open it in your browser.');
+            } catch (error) {
+                console.error(error);
+                alert('HTML export failed.');
+            } finally {
+                exportHtmlBtn.disabled = false;
+                exportHtmlBtn.innerText = '📑 Download Catalog (HTML)';
+            }
+        }
+
+        // Attach export listeners
+        exportCsvBtn.addEventListener('click', exportToCSV);
+        exportZipBtn.addEventListener('click', exportToZip);
+        exportHtmlBtn.addEventListener('click', exportToHtml);
 
         async function loadProducts() {
             const { data, error } = await supabase.from('products').select('*').order('name');
@@ -215,7 +438,6 @@
             
             let image_url = null;
             if (imageFile) {
-                // Sanitize filename
                 let safeName = imageFile.name
                     .replace(/\s+/g, '-')
                     .replace(/[^\w.-]/g, '')
